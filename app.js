@@ -4,6 +4,62 @@
   /** @typedef {{char: string, meaning: string, reading: string, notes: string}} Kanji */
   /** @typedef {{id: string, name: string, kanji: Kanji[]}} Group */
 
+  const DEFAULT_FOOD_KANJI = [
+    ["固め","Katame (かため)","Firm (noodles)","固 = Kata(i) / かた\nRadicals: 固 (口 Enclosure + 古 Old)"],
+    ["柔らかめ","Yawarakame (やわらかめ)","Soft (noodles)","柔 = Yawara(kai) / やわら\nRadicals: 柔 (木 Tree/Wood + 矛 Spear)"],
+    ["普通","Futsuu (ふつう)","Normal / Regular","普 = Fu / ふ\n通 = Tsuu / つう\nRadicals: 普 (日 Sun + 並 Line up); 通 (⻌ Road + 甬 Pass through)"],
+    ["濃いめ","Koime (こいめ)","Strong / Rich flavor","濃 = Ko(i) / こ\nRadicals: 濃 (氵 Water/Liquid + 農 Agriculture)"],
+    ["薄め","Usume (うすめ)","Lighter flavor","薄 = Usu(i) / うす\nRadicals: 薄 (艹 Grass/Plant + 溥 Wide/Water)"],
+    ["多め","Oome (おおめ)","Extra / More","多 = Oo(i) / おお\nRadicals: 多 (夕 Evening doubled)"],
+    ["少なめ","Sukuname (すくなめ)","Less / Light","少 = Sukuna(i) / すくな\nRadicals: 少 (小 Small + extra stroke)"],
+    ["抜き","Nuki (ぬき)","Without / Omit","抜 = Nu(ku) / ぬ\nRadicals: 抜 (扌 Hand + 友 Friend/Pull)"],
+    ["替え玉","Kaedama (かえだま)","Noodle refill","替 = Kae / かえ\n玉 = Tama (Dama) / だま\nRadicals: 替 (日 Sun + 夫 Men); 玉 (玉 Jewel/Ball)"],
+    ["大盛り","Oomori (おおもり)","Large portion","大 = Oo / おお\n盛 = Mori / もり\nRadicals: 大 (Big); 盛 (皿 Dish/Plate + 成)"],
+    ["豚骨","Tonkotsu (とんこつ)","Pork bone broth","豚 = Ton / とん\n骨 = Kotsu / こつ\nRadicals: 豚 (月 Meat + 豕 Pig); 骨 (骨 Bone)"],
+    ["醤油","Shōyu (しょうゆ)","Soy sauce","醬 = Shō / しょう\n油 = Yu / ゆ\nRadicals: 醬 (酉 Fermentation + 將); 油 (氵 Water/Liquid + 由)"],
+    ["味噌","Miso (みそ)","Fermented soybean paste","味 = Mi / み\n噌 = So / そ\nRadicals: 味 (口 Mouth + 未); 噌 (口 Mouth + 曾)"],
+    ["塩","Shio (しお)","Salt","塩 = Shio / しお\nRadicals: 塩 (土 Earth + 臣 Servant + 鹵 Salt land)"],
+    ["つけ麺","Tsukemen (つけめん)","Dipping noodles","麺 = Men / めん\nRadicals: 麺 (麥 Wheat/Grain + 面 Face)"],
+    ["家系","Iekei (いえけい)","Yokohama-style rich pork/soy","家 = Ie / いえ\n系 = Kei / けい\nRadicals: 家 (宀 Roof + 豕 Pig); 系 (糸 Thread/Lineage)"],
+    ["叉焼","Chāshū (チャーシュー)","Braised pork belly","叉 = Chā / ちゃ\n焼 = Shū / しゅう\nRadicals: 叉 (Fork/Cross); 焼 (火 Fire + 尭)"],
+    ["味玉","Ajitama (あじたま)","Seasoned soft-boiled egg","味 = Aji / あじ\n玉 = Tama / たま\nRadicals: 味 (Taste); 玉 (玉 Ball/Egg)"],
+    ["煮卵","Nitamago (にたまご)","Seasoned boiled egg","煮 = Ni / に\n卵 = Tamago / たまご\nRadicals: 煮 (灬 Fire/Heat + 者); 卵 (Egg/Oval)"],
+    ["海苔","Nori (のり)","Dried seaweed","海 = No / の\n苔 = Ri / り\nRadicals: 海 (氵 Water/Sea + 每); 苔 (艹 Grass/Plant + 台)"],
+    ["木耳","Kikurage (きくらげ)","Wood ear mushroom","木 = Ki / き\n耳 = Kurage / くらげ\nRadicals: 木 (木 Tree/Wood); 耳 (耳 Ear)"],
+    ["白飯","Shiromeshi (しろめし)","Plain white rice","白 = Shiro / しろ\n飯 = Meshi / めし\nRadicals: 白 (白 White); 飯 (飠 Food/Eat + 反)"],
+    ["生ビール","Nama Biiru (なまビール)","Draft beer","生 = Nama / なま\nRadicals: 生 (生 Life/Fresh/Raw)"],
+    ["日本酒","Nihonshu (にほんしゅ)","Japanese Sake","日 = Ni / に\n本 = Hon / ほん\n酒 = Shu / しゅ\nRadicals: 日 (Sun); 本 (Origin/Tree); 酒 (氵 Water + 酉 Fermentation)"],
+    ["焼酎","Shōchū (しょうちゅう)","Distilled spirit","焼 = Shō / しょう\n酎 = Chū / ちゅう\nRadicals: 焼 (火 Fire); 酎 (酉 Fermentation + 寸)"],
+    ["枝豆","Edamame (えだまめ)","Steamed soybeans","枝 = E / え\n豆 = Mame / まめ\nRadicals: 枝 (木 Tree/Branch); 豆 (豆 Bean/Pod)"],
+    ["焼き鳥","Yakitori (やきとり)","Grilled chicken skewers","焼 = Yaki / やき\n鳥 = Tori / とり\nRadicals: 焼 (火 Fire/Grill); 鳥 (鳥 Bird/Poultry)"],
+    ["唐揚げ","Karaage (からあげ)","Japanese fried chicken","唐 = Kara / から\n揚 = Age / あげ\nRadicals: 唐 (Foreign/China); 揚 (扌 Hand + 昜 Hoist/Fry)"],
+    ["餃子","Gyōza (ぎょうざ)","Pan-fried dumplings","餃 = Gyō / ぎょう\n子 = Za / ざ\nRadicals: 餃 (飠 Food + 交); 子 (子 Child/Small)"],
+    ["玉子焼き","Tamagoyaki (たまごやき)","Rolled omelet","玉 = Tama / たま\n子 = Go / ご\n焼 = Yaki / やき\nRadicals: 玉 (Ball); 子 (Child); 焼 (火 Fire)"],
+    ["刺身","Sashimi (さしみ)","Sliced raw fish","刺 = Sashi / さし\n身 = Mi / み\nRadicals: 刺 (刂 Knife/Pierce + 朿); 身 (身 Body)"],
+    ["串焼き","Kushiyaki (くしやき)","Skewered grilled items","串 = Kushi / くし\n焼 = Yaki / やき\nRadicals: 串 (串 Skewer piercing items); 焼 (火 Fire)"],
+    ["ねぎま","Negima","Chicken thigh & green onion","葱 = Negi / ねぎ\n間 = Ma / ま\nRadicals: 葱 (艹 Grass) + 間 (門 Gate + 日 Sun)"],
+    ["もも","Momo","Chicken thigh","N/A (usually Hiragana)\nRepresents thigh meat"],
+    ["つくね","Tsukune","Chicken meatball","N/A (usually Hiragana)\nFinely minced chicken patty"],
+    ["皮","Kawa (かわ)","Chicken skin","皮 = Kawa / かわ\nRadicals: 皮 (皮 Skin/Hide radical)"],
+    ["砂肝","Sunagimo (すなぎも)","Gizzard","砂 = Suna / すな\n肝 = Gimo / ぎも\nRadicals: 砂 (石 Stone) + 肝 (月 Meat + 干)"],
+    ["手羽先","Tebasaki (てばさき)","Chicken wing tip","手 = Te / て\n羽 = Ba / ば\n先 = Saki / さき\nRadicals: 手 (Hand) + 羽 (Feather/Wing) + 先 (Ahead)"],
+    ["軟骨","Nankotsu (なんこつ)","Cartilage","軟 = Nan / なん\n骨 = Kotsu / こつ\nRadicals: 軟 (車 Cart + 欠) + 骨 (骨 Bone)"],
+    ["塩","Shio (しお)","Seasoning: Salt","塩 = Shio / しお\nRadicals: 塩 (土 Earth + 鹵 Salt land)"],
+    ["タレ","Tare","Seasoning: Sweet soy glaze","N/A (Katakana)\nRich basting sauce"],
+    ["カルビ","Karubi","Boneless short rib","N/A (Katakana from Korean)\nMarbled beef short rib"],
+    ["ロース","Rōsu","Chuck / Loin cut","N/A (Katakana from \"Roast\")\nLeaner beef cut"],
+    ["牛タン","Gyūtan (ぎゅうタン)","Beef tongue","牛 = Gyū / ぎゅう\nタン = Tan (Tongue)\nRadicals: 牛 (牛 Cow radical) + Katakana"],
+    ["ハラミ","Harami","Skirt steak","N/A (usually Katakana)\nTender diaphragm muscle"],
+    ["ホルモン","Horumon","Offal / Intestines","N/A (Katakana)\nMixed organ meats"],
+    ["豚バラ","Butabara (ぶたバラ)","Pork belly","豚 = Buta / ぶた\nRadicals: 豚 (月 Meat + 豕 Pig)"],
+    ["サンチュ","Sanchu","Wrap lettuce","N/A (Katakana)\nLettuce used to wrap grilled meat"],
+    ["網","Ami (あみ)","Wire grill grate","網 = Ami / あみ\nRadicals: 網 (糸 Thread + 罔 Net)"],
+  ].map(([char, reading, meaning, notes]) => ({ char, reading, meaning, notes }));
+
+  function defaultState() {
+    return { groups: [{ id: 'food-default', name: 'Food', kanji: DEFAULT_FOOD_KANJI }] };
+  }
+
   /** @type {{groups: Group[]}} */
   let state = loadState();
 
@@ -12,12 +68,12 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { groups: [] };
+      if (!raw) return defaultState();
       const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.groups)) return { groups: [] };
+      if (!parsed || !Array.isArray(parsed.groups)) return defaultState();
       return parsed;
     } catch (e) {
-      return { groups: [] };
+      return defaultState();
     }
   }
 
