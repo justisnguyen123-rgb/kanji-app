@@ -19,39 +19,8 @@
   <section id="view-home" class="view">
     <header class="topbar">
       <h1>Kanji Cards</h1>
-      <button id="btn-new-group" class="btn btn-primary">+ New Group</button>
     </header>
     <div id="group-list" class="group-list"></div>
-    <p id="empty-state" class="empty-state" hidden>No groups yet. Create one to get started.</p>
-  </section>
-
-  <!-- EDIT GROUP VIEW: name + kanji list management -->
-  <section id="view-edit" class="view" hidden>
-    <header class="topbar">
-      <button class="btn btn-back" id="btn-edit-back">&larr; Back</button>
-      <input id="edit-group-name" class="group-name-input" placeholder="Group name" />
-      <button id="btn-delete-group" class="btn btn-danger">Delete Group</button>
-    </header>
-
-    <form id="form-add-kanji" class="add-kanji-form">
-      <input id="input-term" placeholder="漢字 / word" required />
-      <input id="input-reading" placeholder="Reading (optional)" />
-      <input id="input-meaning" placeholder="Meaning" required />
-      <textarea id="input-notes" placeholder="Notes: per-kanji readings, radical breakdown, etc. (optional)"></textarea>
-      <button type="submit" class="btn btn-primary">Add</button>
-    </form>
-
-    <details id="bulk-add-details" class="bulk-add">
-      <summary>Bulk add (paste multiple at once)</summary>
-      <p class="bulk-add-hint">One entry per line, fields separated by <code>|</code>: <code>term | reading | meaning | notes</code>. Reading and notes are optional.</p>
-      <textarea id="bulk-add-textarea" placeholder="固め | Katame (かため) | Firm (noodles) | 固 = Kata(i) / かた"></textarea>
-      <button id="btn-bulk-add" class="btn btn-primary" type="button">Import lines</button>
-    </details>
-
-    <ul id="kanji-list" class="kanji-list"></ul>
-    <p id="edit-empty-state" class="empty-state" hidden>No kanji in this group yet. Add some above.</p>
-
-    <button id="btn-learn-from-edit" class="btn btn-learn" hidden>Learn this group</button>
   </section>
 
   <!-- LEARN VIEW: flashcard session -->
