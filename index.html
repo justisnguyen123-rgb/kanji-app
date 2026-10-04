@@ -15,12 +15,60 @@
 <body>
 <div id="app">
 
-  <!-- HOME VIEW: list of groups -->
+  <!-- HOME VIEW -->
   <section id="view-home" class="view">
     <header class="topbar">
       <h1>Kanji Cards</h1>
     </header>
     <div id="group-list" class="group-list"></div>
+    <button id="btn-open-rules" class="btn btn-rules-link">How kanji readings work &rarr;</button>
+  </section>
+
+  <!-- RULES VIEW -->
+  <section id="view-rules" class="view" hidden>
+    <header class="topbar">
+      <button class="btn btn-back" id="btn-rules-back">&larr; Back</button>
+      <h1>Reading rules</h1>
+    </header>
+    <div class="rules">
+      <h2>On vs kun</h2>
+      <p><b>On’yomi (音読み)</b> is the Chinese-derived sound. <b>Kun’yomi (訓読み)</b> is the native Japanese word the kanji was matched to. One kanji usually has both: 食 is <b>ショク</b> (on) in 洋食 but <b>た</b>-べる (kun) in 食べ放題.</p>
+
+      <h2>Rules of thumb</h2>
+      <ul>
+        <li><b>Kanji + trailing hiragana</b> (okurigana) &rarr; kun: 焼く, 辛い, 食べる.</li>
+        <li><b>Two or more kanji together</b> &rarr; usually on + on: 軟骨 なんこつ, 洋食 ようしょく, 禁煙席 きんえんせき.</li>
+        <li><b>A lone kanji noun</b> is often kun (塩 しお, 魚 さかな, 網 あみ) but not always: 肉 にく and 茶 ちゃ are on. Check each one.</li>
+        <li>Native food words are often kun + kun: 刺身 さしみ, 手羽先 てばさき, 赤身 あかみ.</li>
+      </ul>
+
+      <h2>Mixed readings</h2>
+      <ul>
+        <li><b>Kun + on (湯桶読み, yutō-yomi):</b> 家系 いえ+けい, 梅酒 うめ+しゅ, 熱燗 あつ+かん.</li>
+        <li><b>On + kun (重箱読み, jūbako-yomi):</b> 特盛り とく+もり, 税込 ぜい+こみ.</li>
+      </ul>
+
+      <h2>Okurigana</h2>
+      <p>The kana after a kanji marks which kun reading it is, and the form of the word. In 少ない the kanji is only <b>すく</b>; ない is okurigana. In 柔らかい the kanji is <b>やわ</b>; らかい is okurigana. Nouns made from verb stems often drop or keep it: 焼き鳥, 持ち帰り, 刺身 (刺し), 帆立 (立て).</p>
+
+      <h2>Rendaku (voicing)</h2>
+      <p>The first sound of the second part often becomes voiced: た→だ, さ→ざ, こ→ご, は→ば, ふ→ぶ, き→ぎ, す→ず. Examples: 替え<b>だ</b>ま (玉), 焼き<b>ざ</b>かな (魚), 穴<b>ご</b> (子), 手<b>ば</b>さき (羽), 砂<b>ぎ</b>も (肝), 鰹<b>ぶ</b>し (節), かき<b>ご</b>おり (氷), 回転<b>ず</b>し (寿司). Common in kun + kun compounds, not guaranteed.</p>
+
+      <h2>Sound changes in on readings</h2>
+      <ul>
+        <li><b>Small っ:</b> ク / ツ / チ / キ at the end of an on reading becomes っ before K, S, T, CH, P sounds: 食券 しょっけん, 抹茶 まっちゃ, 鉄板 てっぱん, 納豆 なっとう.</li>
+        <li><b>H → P after ん or っ:</b> 単品 たん<b>ぴ</b>ん (ヒン), 鉄板 てっ<b>ぱ</b>ん (ハン).</li>
+      </ul>
+
+      <h2>Whole-word readings (熟字訓)</h2>
+      <p>Some words are read as a unit; you can’t map kanji to sounds one by one. Learn the whole word: 海老 えび, 烏賊 いか, 南瓜 かぼちゃ, 茄子 なす, 蕎麦 そば, 海苔 のり, 木耳 きくらげ, 味噌 みそ, 生姜 しょうが, 雲丹 うに, 山葵 わさび, 寿司 すし (ateji: kanji chosen for sound or luck).</p>
+
+      <h2>Loanword readings</h2>
+      <p>餃子 ぎょうざ and 叉焼 チャーシュー arrived from Chinese together with the word, so they don’t follow Japanese on/kun. 烏龍 ウーロン too.</p>
+
+      <h2>One kanji, many readings</h2>
+      <p>Context decides. 辛い is <b>からい</b> (spicy) or <b>つらい</b> (painful). 生 is <b>なま</b> in 生ビール, <b>せい</b> in 生活, <b>しょう</b> in 一生. 鮭 and 酒 are both <b>さけ</b>, but they are different kanji.</p>
+    </div>
   </section>
 
   <!-- LEARN VIEW: flashcard session -->
@@ -37,11 +85,7 @@
           <div class="flashcard-face flashcard-front">
             <span id="card-char" class="card-char"></span>
           </div>
-          <div class="flashcard-face flashcard-back">
-            <div class="card-meaning" id="card-meaning"></div>
-            <div class="card-readings" id="card-readings"></div>
-            <div class="card-notes" id="card-notes"></div>
-          </div>
+          <div class="flashcard-face flashcard-back" id="card-back"></div>
         </div>
       </div>
     </div>
@@ -52,10 +96,11 @@
       <button id="btn-next" class="btn btn-nav">Next &rarr;</button>
     </div>
 
-    <p id="learn-done" class="empty-state" hidden>You've gone through the whole group! Reshuffle to go again.</p>
+    <p id="learn-done" class="empty-state" hidden>You’ve gone through the whole group! Reshuffle to go again.</p>
   </section>
 
 </div>
+<script src="data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
