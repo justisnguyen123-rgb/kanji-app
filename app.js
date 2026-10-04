@@ -52,14 +52,61 @@
     }),
   }));
 
-  const usage = {};
-  const kanjiOrder = [];
-  groups.forEach(g => g.cards.forEach(card => card.tokens.forEach(token => {
-    [...token.chars].forEach(ch => {
-      if (!usage[ch]) { usage[ch] = []; kanjiOrder.push(ch); }
-      usage[ch].push({ word: card.front, kana: card.kana, used: usedDisplay(token), type: token.type });
+  const wordMap = {};
+  groups.forEach(g => g.cards.forEach(card => { wordMap[card.front] = card; }));
+
+  function parseParts(parts) {
+    return parts.map(([text, reading, gloss, spec]) => {
+      const own = spec ? parseSpec(spec) : null;
+      return { text, reading, gloss, own: !!own, tokens: own || (wordMap[text] ? wordMap[text].tokens : []) };
     });
-  })));
+  }
+
+  function parseSlots(slots) {
+    if (!slots) return [];
+    return slots.trim().split(/\s+/).map(s => {
+      const [word, kana] = s.split(':');
+      return { word, kana };
+    });
+  }
+
+  PHRASES.forEach(pg => groups.push({
+    id: pg.id,
+    name: pg.name,
+    desc: pg.desc,
+    unit: 'phrases',
+    cards: pg.entries.map(e => ({
+      kind: 'phrase',
+      front: e.ja,
+      kana: e.kana,
+      romaji: e.romaji,
+      meaning: e.en,
+      role: e.role,
+      note: e.note,
+      pattern: e.pattern,
+      slots: parseSlots(e.slots),
+      parts: parseParts(e.parts),
+    })),
+  }));
+
+  const usage = {};
+  const usageSeen = new Set();
+  const kanjiOrder = [];
+  groups.forEach(g => g.cards.forEach(card => {
+    const sources = card.kind === 'phrase'
+      ? card.parts.filter(p => p.own).map(p => ({ label: p.text, kana: p.reading, tokens: p.tokens }))
+      : [{ label: card.front, kana: card.kana, tokens: card.tokens }];
+    sources.forEach(src => src.tokens.forEach(token => {
+      [...token.chars].forEach(ch => {
+        if (!usage[ch]) { usage[ch] = []; kanjiOrder.push(ch); }
+        const used = usedDisplay(token);
+        const key = `${ch}|${src.label}|${used}`;
+        if (usageSeen.has(key)) return;
+        usageSeen.add(key);
+        usage[ch].push({ word: src.label, kana: src.kana, used, type: token.type });
+      });
+    }));
+  }));
 
   groups.push({
     id: 'kanji',
@@ -203,6 +250,45 @@
     }
   }
 
+  function shortPattern(tokens) {
+    return tokens.map(t => TYPE_SHORT[t.type]).join(' + ');
+  }
+
+  function renderPhraseBack(card) {
+    backEl.replaceChildren();
+    backEl.append(el('div', `role-tag role-${card.role}`, card.role === 'say' ? 'You say' : 'You’ll hear'));
+    backEl.append(el('div', 'card-meaning', card.meaning));
+
+    const reading = el('div', 'card-reading');
+    reading.append(el('span', 'kana', card.kana), el('span', 'romaji', card.romaji));
+    backEl.append(reading);
+
+    const list = el('div', 'ph-parts');
+    card.parts.forEach(part => {
+      const row = el('div', 'ph-part');
+      const top = el('div', 'ph-top');
+      top.append(el('span', 'ph-text', part.text), el('span', 'ph-reading', part.reading));
+      if (part.tokens.length) top.append(el('span', 'bd-type', shortPattern(part.tokens)));
+      row.append(top, el('div', 'ph-gloss', part.gloss));
+      list.append(row);
+    });
+    backEl.append(list);
+
+    if (card.note) backEl.append(el('div', 'rule-note', card.note));
+
+    if (card.pattern && card.slots.length) {
+      backEl.append(el('div', 'uses-title', 'Swap in'));
+      const swaps = el('div', 'uses');
+      card.slots.forEach(slot => {
+        const row = el('div', 'swap-row');
+        row.append(el('span', 'swap-ja', card.pattern.replace('{}', slot.word)));
+        if (slot.kana !== slot.word) row.append(el('span', 'swap-kana', `${slot.word} = ${slot.kana}`));
+        swaps.append(row);
+      });
+      backEl.append(swaps);
+    }
+  }
+
   function frontSize(text) {
     const n = [...text].length;
     if (n <= 1) return '6rem';
@@ -210,7 +296,25 @@
     if (n === 3) return '3.5rem';
     if (n === 4) return '2.8rem';
     if (n <= 6) return '2.2rem';
-    return '1.8rem';
+    if (n <= 9) return '1.8rem';
+    if (n <= 13) return '1.5rem';
+    return '1.3rem';
+  }
+
+  // ---- Speech ----
+
+  const canSpeak = 'speechSynthesis' in window;
+  let currentSpeech = '';
+
+  function speak(text) {
+    if (!canSpeak || !text) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ja-JP';
+    utter.rate = 0.85;
+    const voice = window.speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('ja'));
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
   }
 
   // ---- Learn ----
@@ -226,6 +330,8 @@
   const learnControlsEl = document.querySelector('.learn-controls');
   const learnDoneEl = document.getElementById('learn-done');
   const prevBtn = document.getElementById('btn-prev');
+  const listenBtn = document.getElementById('btn-listen');
+  listenBtn.addEventListener('click', () => speak(currentSpeech));
 
   function shuffledIndices(n) {
     const arr = Array.from({ length: n }, (_, i) => i);
@@ -267,8 +373,15 @@
     const card = group.cards[learnOrder[learnPos]];
     cardCharEl.textContent = card.front;
     cardCharEl.style.fontSize = frontSize(card.front);
+    cardCharEl.style.lineHeight = [...card.front].length > 6 ? '1.35' : '1';
     backEl.scrollTop = 0;
-    if (card.kind === 'kanji') renderKanjiBack(card); else renderWordBack(card);
+    if (card.kind === 'kanji') renderKanjiBack(card);
+    else if (card.kind === 'phrase') renderPhraseBack(card);
+    else renderWordBack(card);
+
+    if (canSpeak) window.speechSynthesis.cancel();
+    currentSpeech = card.kind === 'kanji' ? '' : card.kana;
+    listenBtn.hidden = !canSpeak || !currentSpeech;
 
     learnProgressEl.textContent = `${learnPos + 1} / ${learnOrder.length}`;
     prevBtn.disabled = learnPos === 0;
@@ -301,7 +414,10 @@
     renderLearnCard();
   });
 
-  document.getElementById('btn-learn-back').addEventListener('click', () => showView('home'));
+  document.getElementById('btn-learn-back').addEventListener('click', () => {
+    if (canSpeak) window.speechSynthesis.cancel();
+    showView('home');
+  });
 
   document.addEventListener('keydown', (e) => {
     if (views.learn.hidden) return;

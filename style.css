@@ -345,7 +345,38 @@ body {
   gap: 10px;
 }
 
+.learn-controls { flex-wrap: wrap; }
+
 .btn-nav {
-  min-width: 90px;
-  padding: 10px 14px;
+  min-width: 72px;
+  padding: 10px 12px;
 }
+
+.btn-listen[hidden] { display: none; }
+.btn-listen { color: var(--accent); border-color: var(--accent); }
+
+.role-tag {
+  align-self: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.role-hear { color: #b87a1f; }
+
+.ph-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.ph-part { border-top: 1px solid var(--border); padding-top: 6px; }
+.ph-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ph-text { font-size: 1.25rem; }
+.ph-reading { font-weight: 600; font-size: 0.95rem; }
+.ph-gloss { color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; }
+
+.swap-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.swap-ja { font-size: 0.98rem; }
+.swap-kana { color: var(--text-muted); font-size: 0.75rem; }

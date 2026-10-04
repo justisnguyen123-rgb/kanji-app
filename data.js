@@ -167,6 +167,30 @@ const KANJI = {
   '福': ['フク', '', 'good fortune', '示 altar + 畐'],
   '団': ['ダン トン', '', 'group, round', '囗 enclosure + 寸'],
   '鍋': ['カ', 'なべ', 'pot, hot pot', '金 metal + 咼'],
+
+  // ---- Phrases group ----
+  '一': ['イチ イツ', 'ひと(つ) ひと', 'one', 'a single stroke'],
+  '二': ['ニ', 'ふた(つ) ふた', 'two', 'two strokes'],
+  '三': ['サン', 'み(つ) みっ(つ)', 'three', 'three strokes'],
+  '四': ['シ', 'よ(つ) よっ(つ) よん', 'four', '囗 enclosure + 儿'],
+  '五': ['ゴ', 'いつ(つ)', 'five', ''],
+  '人': ['ジン ニン', 'ひと', 'person', 'picture of a person'],
+  '名': ['メイ ミョウ', 'な', 'name; counter for people (polite)', '夕 evening + 口 mouth'],
+  '様': ['ヨウ', 'さま', 'Mr/Ms (polite), appearance', '木 + 羊 + 水'],
+  '何': ['カ', 'なに なん', 'what', '亻 person + 可'],
+  '願': ['ガン', 'ねが(う)', 'request, wish', '原 + 頁 head'],
+  '空': ['クウ', 'そら あ(く) から', 'sky; empty, vacant', '穴 hole + 工'],
+  '以': ['イ', '', 'by means of; ‘and below / and above’ in 以上', ''],
+  '上': ['ジョウ ショウ', 'うえ あ(げる) のぼ(る)', 'above, up', ''],
+  '同': ['ドウ', 'おな(じ)', 'same', '冂 + 一 + 口'],
+  '別': ['ベツ', 'わか(れる)', 'separate, different', '另 + 刂 knife'],
+  '使': ['シ', 'つか(う)', 'use', '亻 person + 吏'],
+  '英': ['エイ', '', 'England, English; excellent', '艹 grass + 央'],
+  '語': ['ゴ', 'かた(る)', 'language, word', '言 words + 吾'],
+  '杯': ['ハイ', 'さかずき', 'cup; counter for glasses of drink', '木 wood + 不'],
+  '買': ['バイ', 'か(う)', 'buy', '罒 net + 貝 shell / money'],
+  '決': ['ケツ', 'き(める) き(まる)', 'decide', '氵 water + 夬'],
+  '待': ['タイ', 'ま(つ)', 'wait', '彳 step + 寺 temple'],
 };
 
 // Entry: [word, "kana|romaji", meaning, spec, note]
@@ -371,6 +395,204 @@ const GROUPS = [
       ["たい焼き", "たいやき|taiyaki", "Fish-shaped cake", "焼:や:k", "たい = 鯛 (sea bream) in kana, + 焼き."],
       ["大福", "だいふく|daifuku", "Filled rice cake", "大:だい:o 福:ふく:o", "On + on. ‘Great luck’."],
       ["団子", "だんご|dango", "Sweet dumpling", "団子:だんご:i", "Treat as a set word: 子 is not read ご in normal on/kun."],
+    ],
+  },
+];
+
+// Phrase: { ja, kana, romaji, en, role: 'say'|'hear', parts, note, pattern?, slots? }
+// parts: [text, reading, gloss, spec?]. If spec is omitted and text is a word in the other decks, that word's pattern is reused.
+// pattern: sentence template with {}; slots: "word:reading word:reading ..." swapped into {}.
+const PHRASES = [
+  {
+    id: 'phrases-order',
+    name: 'Phrases: Ordering & Asking',
+    desc: 'Calling staff, seating, ordering, counters, asking questions, paying, and what staff will say to you',
+    entries: [
+      // Getting started
+      {
+        ja: "すみません。", kana: "すみません", romaji: "sumimasen", en: "Excuse me (to call staff)", role: "say",
+        parts: [["すみません", "すみません", "excuse me / sorry / thank you"]],
+        note: "Calls a server over. It also means ‘sorry’ and, in context, ‘thank you’.",
+      },
+      {
+        ja: "二人です。", kana: "ふたりです", romaji: "futari desu", en: "Two people.", role: "say",
+        parts: [["二人", "ふたり", "two people", "二人:ふたり:i"], ["です", "です", "is (polite)"]],
+        note: "Counter 人: 一人 ひとり and 二人 ふたり are whole-word readings. From three it is ニン: 三人 さんにん, but 四人 is よにん.",
+        pattern: "{}です。", slots: "一人:ひとり 二人:ふたり 三人:さんにん 四人:よにん 五人:ごにん",
+      },
+      {
+        ja: "予約しています。", kana: "よやくしています", romaji: "yoyaku shite imasu", en: "I have a reservation.", role: "say",
+        parts: [["予約", "よやく", "reservation"], ["して", "して", "doing (する, te-form)"], ["います", "います", "am (ongoing state)"]],
+        note: "〜しています describes a state that continues. Add your name first: ‘[name]で予約しています’.",
+      },
+      {
+        ja: "席は空いていますか。", kana: "せきはあいていますか", romaji: "seki wa aite imasu ka", en: "Is there a seat available?", role: "say",
+        parts: [["席", "せき", "seat", "席:せき:o"], ["は", "は (wa)", "topic marker"], ["空いて", "あいて", "open (空く, te-form)", "空:あ:k"], ["います", "います", "is (ongoing state)"], ["か", "か", "question marker"]],
+        note: "空く (aku) = to be open or empty. 空 is クウ in 空港 (kūkō, airport) and そら (sky).",
+      },
+      {
+        ja: "禁煙席でお願いします。", kana: "きんえんせきでおねがいします", romaji: "kin’enseki de onegai shimasu", en: "Non-smoking seat, please.", role: "say",
+        parts: [["禁煙席", "きんえんせき", "non-smoking seat"], ["で", "で", "by / with (the option you choose)"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "〜でお願いします = ‘I’d like it ___’. で marks the option you pick: seat type, portion size, noodle firmness, takeout.",
+        pattern: "{}でお願いします。", slots: "禁煙席:きんえんせき 喫煙席:きつえんせき 大盛り:おおもり 並盛り:なみもり 特盛り:とくもり 持ち帰り:もちかえり 固め:かため 柔らかめ:やわらかめ 薄め:うすめ 濃いめ:こいめ",
+      },
+      {
+        ja: "英語のメニューはありますか。", kana: "えいごのメニューはありますか", romaji: "eigo no menyū wa arimasu ka", en: "Do you have an English menu?", role: "say",
+        parts: [["英語", "えいご", "English (language)", "英:えい:o 語:ご:o"], ["の", "の", "of"], ["メニュー", "メニュー", "menu"], ["は", "は (wa)", "topic marker"], ["ありますか", "ありますか", "do you have?"]],
+        note: "Swap 英語 for 日本語 (にほんご) to ask for a Japanese menu. は is read わ when it marks the topic.",
+      },
+      {
+        ja: "食券はどこで買いますか。", kana: "しょっけんはどこでかいますか", romaji: "shokken wa doko de kaimasu ka", en: "Where do I buy the meal ticket?", role: "say",
+        parts: [["食券", "しょっけん", "meal ticket"], ["は", "は (wa)", "topic marker"], ["どこ", "どこ", "where"], ["で", "で", "at (where an action happens)"], ["買います", "かいます", "buy (polite)", "買:か:k"], ["か", "か", "question marker"]],
+        note: "Many ramen and gyūdon shops use a ticket machine: buy first, then hand the ticket to staff.",
+      },
+      // Ordering
+      {
+        ja: "すみません、注文お願いします。", kana: "すみません、ちゅうもんおねがいします", romaji: "sumimasen, chūmon onegai shimasu", en: "Excuse me, I’d like to order.", role: "say",
+        parts: [["すみません", "すみません", "excuse me"], ["注文", "ちゅうもん", "order"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "The particle を is often dropped in speech: 注文お願いします = 注文をお願いします.",
+      },
+      {
+        ja: "これをください。", kana: "これをください", romaji: "kore o kudasai", en: "This one, please.", role: "say",
+        parts: [["これ", "これ", "this"], ["を", "を (o)", "marks what you want"], ["ください", "ください", "please give me"]],
+        note: "Point at the menu or the plastic food display and say it. ください = ‘please give me’.",
+      },
+      {
+        ja: "生ビールをください。", kana: "なまビールをください", romaji: "nama bīru o kudasai", en: "A draft beer, please.", role: "say",
+        parts: [["生ビール", "なまビール", "draft beer"], ["を", "を (o)", "marks what you want"], ["ください", "ください", "please give me"]],
+        note: "Pattern: [thing]をください. [thing]をお願いします is slightly more polite.",
+        pattern: "{}をください。", slots: "生ビール:なまビール 餃子:ぎょうざ お水:おみず お茶:おちゃ 味噌汁:みそしる ご飯:ごはん 刺身:さしみ 焼き鳥:やきとり 唐揚げ:からあげ 枝豆:えだまめ",
+      },
+      {
+        ja: "餃子を二つください。", kana: "ぎょうざをふたつください", romaji: "gyōza o futatsu kudasai", en: "Two orders of gyōza, please.", role: "say",
+        parts: [["餃子", "ぎょうざ", "dumplings"], ["を", "を (o)", "marks the item"], ["二つ", "ふたつ", "two (items)", "二:ふた:k"], ["ください", "ください", "please give me"]],
+        note: "The つ counters: 一つ ひとつ, 二つ ふたつ, 三つ みっつ (small っ), 四つ よっつ, 五つ いつつ. The number goes after the item.",
+        pattern: "{}を二つください。", slots: "餃子:ぎょうざ 唐揚げ:からあげ 握り:にぎり 刺身:さしみ 枝豆:えだまめ 漬物:つけもの",
+      },
+      {
+        ja: "生ビールを二杯お願いします。", kana: "なまビールをにはいおねがいします", romaji: "nama bīru o nihai onegai shimasu", en: "Two draft beers, please.", role: "say",
+        parts: [["生ビール", "なまビール", "draft beer"], ["を", "を (o)", "marks the item"], ["二杯", "にはい", "two glasses", "二:に:o 杯:はい:o"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "杯 counts glasses and cups, and its sound shifts: 一杯 いっぱい, 二杯 にはい, 三杯 さんばい (voiced), 四杯 よんはい. Note 二 is に here, not ふた.",
+        pattern: "{}を二杯お願いします。", slots: "生ビール:なまビール 日本酒:にほんしゅ 梅酒:うめしゅ ハイボール:ハイボール 烏龍茶:ウーロンちゃ お茶:おちゃ レモンサワー:レモンサワー",
+      },
+      {
+        ja: "同じものをください。", kana: "おなじものをください", romaji: "onaji mono o kudasai", en: "I’ll have the same.", role: "say",
+        parts: [["同じ", "おなじ", "same", "同:おな:k"], ["もの", "もの", "thing"], ["を", "を (o)", "marks what you want"], ["ください", "ください", "please give me"]],
+        note: "同じ = 同 (おな) + okurigana じ. Handy when someone else at the table has just ordered.",
+      },
+      {
+        ja: "麺は固めでお願いします。", kana: "めんはかためでおねがいします", romaji: "men wa katame de onegai shimasu", en: "Firm noodles, please.", role: "say",
+        parts: [["麺", "めん", "noodles", "麺:めん:o"], ["は", "は (wa)", "topic marker"], ["固め", "かため", "firm"], ["で", "で", "by / with"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "Ramen shops let you choose noodle firmness, broth strength and more, using the same [thing]は[option]で pattern.",
+        pattern: "麺は{}でお願いします。", slots: "固め:かため 普通:ふつう 柔らかめ:やわらかめ",
+      },
+      {
+        ja: "味は濃いめでお願いします。", kana: "あじはこいめでおねがいします", romaji: "aji wa koime de onegai shimasu", en: "Strong flavor, please.", role: "say",
+        parts: [["味", "あじ", "flavor", "味:あじ:k"], ["は", "は (wa)", "topic marker"], ["濃いめ", "こいめ", "strong"], ["で", "で", "by / with"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "味 is あじ here but み in 味噌: same kanji, a different reading depending on the word.",
+        pattern: "味は{}でお願いします。", slots: "濃いめ:こいめ 普通:ふつう 薄め:うすめ",
+      },
+      {
+        ja: "わさび抜きでお願いします。", kana: "わさびぬきでおねがいします", romaji: "wasabi nuki de onegai shimasu", en: "No wasabi, please.", role: "say",
+        parts: [["わさび", "わさび", "wasabi"], ["抜き", "ぬき", "without"], ["で", "で", "by / with"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "[thing]抜き = ‘without ___’. Sushi menus also say サビ抜き.",
+        pattern: "{}抜きでお願いします。", slots: "わさび:わさび ねぎ:ねぎ 卵:たまご 海苔:のり 七味:しちみ 紅生姜:べにしょうが",
+      },
+      {
+        ja: "替え玉をお願いします。", kana: "かえだまをおねがいします", romaji: "kaedama o onegai shimasu", en: "A noodle refill, please.", role: "say",
+        parts: [["替え玉", "かえだま", "noodle refill"], ["を", "を (o)", "marks what you want"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "Order it when your noodles are gone but there is still broth in the bowl.",
+      },
+      {
+        ja: "お代わりをお願いします。", kana: "おかわりをおねがいします", romaji: "okawari o onegai shimasu", en: "Another helping / refill, please.", role: "say",
+        parts: [["お代わり", "おかわり", "refill / seconds"], ["を", "を (o)", "marks what you want"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "Works for rice, drinks and anything with free or paid refills.",
+      },
+      {
+        ja: "追加で餃子をお願いします。", kana: "ついかでぎょうざをおねがいします", romaji: "tsuika de gyōza o onegai shimasu", en: "One more order of gyōza, please.", role: "say",
+        parts: [["追加", "ついか", "additional order"], ["で", "で", "as / by way of"], ["餃子", "ぎょうざ", "dumplings"], ["を", "を (o)", "marks the item"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "追加で = ‘as an addition’. Use it to add to an order you have already placed.",
+        pattern: "追加で{}をお願いします。", slots: "餃子:ぎょうざ 生ビール:なまビール 焼き鳥:やきとり 唐揚げ:からあげ 日本酒:にほんしゅ",
+      },
+      {
+        ja: "以上です。", kana: "いじょうです", romaji: "ijō desu", en: "That’s all (for my order).", role: "say",
+        parts: [["以上", "いじょう", "that’s all (‘the above’)", "以:い:o 上:じょう:o"], ["です", "です", "is (polite)"]],
+        note: "Tells the server your order is complete. Literally ‘the above is it’.",
+      },
+      // Asking
+      {
+        ja: "おすすめは何ですか。", kana: "おすすめはなんですか", romaji: "osusume wa nan desu ka", en: "What do you recommend?", role: "say",
+        parts: [["おすすめ", "おすすめ", "recommendation"], ["は", "は (wa)", "topic marker"], ["何", "なん", "what", "何:なん:k"], ["ですか", "ですか", "is it?"]],
+        note: "何 is なに or なん. It becomes なん before です and before t, d, n sounds.",
+      },
+      {
+        ja: "これは何ですか。", kana: "これはなんですか", romaji: "kore wa nan desu ka", en: "What is this?", role: "say",
+        parts: [["これ", "これ", "this"], ["は", "は (wa)", "topic marker"], ["何", "なん", "what", "何:なん:k"], ["ですか", "ですか", "is it?"]],
+        note: "Point at the item. Same 何 → なん rule as おすすめは何ですか.",
+      },
+      {
+        ja: "日本酒はありますか。", kana: "にほんしゅはありますか", romaji: "nihonshu wa arimasu ka", en: "Do you have sake?", role: "say",
+        parts: [["日本酒", "にほんしゅ", "sake"], ["は", "は (wa)", "topic marker"], ["ありますか", "ありますか", "do you have?"]],
+        note: "ありますか literally asks ‘does it exist?’. It works for menu items, drinks and available seats.",
+        pattern: "{}はありますか。", slots: "日本酒:にほんしゅ 焼酎:しょうちゅう 烏龍茶:ウーロンちゃ 梅酒:うめしゅ 禁煙席:きんえんせき 定食:ていしょく 味噌汁:みそしる 納豆:なっとう 漬物:つけもの",
+      },
+      {
+        ja: "辛くないものはありますか。", kana: "からくないものはありますか", romaji: "karakunai mono wa arimasu ka", en: "Do you have anything that isn’t spicy?", role: "say",
+        parts: [["辛くない", "からくない", "not spicy", "辛:から:k"], ["もの", "もの", "thing"], ["は", "は (wa)", "topic marker"], ["ありますか", "ありますか", "do you have?"]],
+        note: "Negative of 辛い: 辛くない. Remember 辛い can also be つらい (painful).",
+      },
+      // Eating here / paying
+      {
+        ja: "ここで食べます。", kana: "ここでたべます", romaji: "koko de tabemasu", en: "I’ll eat here.", role: "say",
+        parts: [["ここ", "ここ", "here"], ["で", "で", "at (where an action happens)"], ["食べます", "たべます", "eat (polite)", "食:た:k"]],
+        note: "The answer to ‘for here or to go?’. The takeout answer is 持ち帰ります。",
+      },
+      {
+        ja: "持ち帰ります。", kana: "もちかえります", romaji: "mochikaerimasu", en: "I’ll take it to go.", role: "say",
+        parts: [["持ち帰ります", "もちかえります", "take home (polite)", "持:も:k 帰:かえ:k"]],
+        note: "The verb behind 持ち帰り (takeout): 持つ + 帰る.",
+      },
+      {
+        ja: "お会計をお願いします。", kana: "おかいけいをおねがいします", romaji: "okaikei o onegai shimasu", en: "The bill, please.", role: "say",
+        parts: [["お会計", "おかいけい", "the bill"], ["を", "を (o)", "marks what you want"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "Many Japanese restaurants expect you to pay at the register after eating, so watch what other customers do.",
+      },
+      {
+        ja: "別々でお願いします。", kana: "べつべつでおねがいします", romaji: "betsubetsu de onegai shimasu", en: "Separate bills, please.", role: "say",
+        parts: [["別々", "べつべつ", "separately", "別々:べつべつ:i"], ["で", "で", "by / with"], ["お願い", "おねがい", "a request", "願:ねが:k"], ["します", "します", "do (polite)"]],
+        note: "々 repeats the previous kanji. 別 alone is ベツ or わか-れる (to part).",
+      },
+      {
+        ja: "カードは使えますか。", kana: "カードはつかえますか", romaji: "kādo wa tsukaemasu ka", en: "Can I use a card?", role: "say",
+        parts: [["カード", "カード", "card"], ["は", "は (wa)", "topic marker"], ["使えます", "つかえます", "can use (polite)", "使:つか:k"], ["か", "か", "question marker"]],
+        note: "使う (tsukau) → potential 使える (tsukaeru) = ‘can use’.",
+      },
+      // What staff say to you
+      {
+        ja: "何名様ですか。", kana: "なんめいさまですか", romaji: "nan mei sama desu ka", en: "How many people? (staff)", role: "hear",
+        parts: [["何名様", "なんめいさま", "how many people (polite)", "何:なん:k 名:めい:o 様:さま:k"], ["ですか", "ですか", "is it?"]],
+        note: "Kun + on + kun. Answer with 二人です。 名様 is the polite way staff count people.",
+      },
+      {
+        ja: "こちらへどうぞ。", kana: "こちらへどうぞ", romaji: "kochira e dōzo", en: "This way, please. (staff)", role: "hear",
+        parts: [["こちら", "こちら", "this way"], ["へ", "へ (e)", "toward (written へ, said え)"], ["どうぞ", "どうぞ", "please, go ahead"]],
+        note: "へ is pronounced え when it is a particle.",
+      },
+      {
+        ja: "ご注文はお決まりですか。", kana: "ごちゅうもんはおきまりですか", romaji: "go-chūmon wa okimari desu ka", en: "Are you ready to order? (staff)", role: "hear",
+        parts: [["ご注文", "ごちゅうもん", "your order", "注文:ちゅうもん:o"], ["は", "は (wa)", "topic marker"], ["お決まり", "おきまり", "decided", "決:き:k"], ["ですか", "ですか", "is it?"]],
+        note: "ご and お are polite prefixes. 決まる (kimaru) = to be decided. 決 is ケツ in 決定 (kettei).",
+      },
+      {
+        ja: "少々お待ちください。", kana: "しょうしょうおまちください", romaji: "shōshō omachi kudasai", en: "Please wait a moment. (staff)", role: "hear",
+        parts: [["少々", "しょうしょう", "a little", "少々:しょうしょう:o"], ["お待ち", "おまち", "waiting", "待:ま:k"], ["ください", "ください", "please"]],
+        note: "Polite pattern: お + verb stem + ください. 々 repeats 少.",
+      },
+      {
+        ja: "お待たせしました。", kana: "おまたせしました", romaji: "omatase shimashita", en: "Sorry to keep you waiting. (staff)", role: "hear",
+        parts: [["お待たせ", "おまたせ", "keeping (you) waiting", "待:ま:k"], ["しました", "しました", "did (polite past)"]],
+        note: "Staff say it when they bring your food or drink. 待つ (matsu) = wait → 待たせる ‘make wait’.",
+      },
     ],
   },
 ];
