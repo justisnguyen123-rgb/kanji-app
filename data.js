@@ -596,3 +596,55 @@ const PHRASES = [
     ],
   },
 ];
+
+// Role-play scenarios for the Practice tab. vocab entries must be fronts of word cards above.
+const SCENARIOS = [
+  {
+    id: 'ramen',
+    title: 'Ramen shop',
+    blurb: 'Hand over your ticket, pick noodle firmness and flavor, ask for a refill',
+    setting: "A small ramen shop in Japan with a ticket machine (食券機). The customer has already bought a meal ticket and hands it to the staff at the counter. Staff take the ticket, ask how the customer wants the noodle firmness and broth strength, may offer extras, and later the customer may order a noodle refill (替え玉).",
+    goal: "Hand over your ticket, choose noodle firmness and flavor strength, and order a noodle refill.",
+    vocab: ['食券', '固め', '柔らかめ', '普通', '濃いめ', '薄め', '多め', '替え玉', '大盛り', '豚骨', '醤油', '味噌', '味玉', '叉焼', 'お水'],
+  },
+  {
+    id: 'izakaya',
+    title: 'Izakaya evening',
+    blurb: 'Get seated, order drinks and dishes, order more, ask for the bill',
+    setting: "A lively izakaya in the evening. Staff greet the customer, show them to a seat, mention the お通し cover charge, and take drink and food orders. The customer can order more later and ask for the bill.",
+    goal: "Get a seat (smoking or non-smoking), order drinks and a few dishes, order more, and ask for the bill.",
+    vocab: ['禁煙席', '喫煙席', '生ビール', '日本酒', '焼酎', '梅酒', '枝豆', '焼き鳥', '唐揚げ', '餃子', '刺身', '追加', 'お代わり', '飲み放題', 'お会計'],
+  },
+  {
+    id: 'seating',
+    title: 'Getting a table',
+    blurb: 'Party size, reservations, smoking seats, waiting',
+    setting: "The entrance of a restaurant at dinner time. Staff ask how many people there are, whether the customer has a reservation, and the smoking or non-smoking preference. There may be a short wait, or staff may offer a shared table (相席).",
+    goal: "Say how many people, say whether you have a reservation, choose a seat type, and handle a short wait.",
+    vocab: ['予約', '禁煙席', '喫煙席', '食べ放題', '飲み放題', '定食', '単品', '持ち帰り', '注文'],
+  },
+  {
+    id: 'sushi',
+    title: 'Sushi counter',
+    blurb: 'Order pieces, no wasabi, ask what is good today',
+    setting: "A sushi restaurant counter. The sushi chef asks what the customer would like, mentions the fish of the day, and asks about wasabi. The customer orders several pieces and tea.",
+    goal: "Order a few kinds of sushi, ask for no wasabi, ask what is good today, and order tea.",
+    vocab: ['寿司', '握り', '鮪', '赤身', '中トロ', '鮭', '海老', '烏賊', '蛸', 'サビ抜き', '軍艦', '回転寿司', '雲丹', '鯛', 'お茶'],
+  },
+  {
+    id: 'bill',
+    title: 'Paying the bill',
+    blurb: 'Ask for the bill, split it, card or cash, receipt',
+    setting: "The end of a meal at a casual restaurant. The customer asks for the bill. Staff say the total, ask about payment (cash or card) and whether to split the bill, and may ask whether the customer needs a receipt (領収書).",
+    goal: "Ask for the bill, say whether you want separate bills, pay by card or cash, and ask for a receipt.",
+    vocab: ['お会計', '税込', '追加', 'お代わり', '無料', '注文'],
+  },
+  {
+    id: 'allergy',
+    title: 'Allergies and dietary needs',
+    blurb: 'Say what you cannot eat and check dishes',
+    setting: "A restaurant where the customer has a food allergy or dietary restriction. Staff listen, check the menu and explain which dishes contain the allergen.",
+    goal: "Explain what you cannot eat, ask whether specific dishes contain it, and choose a safe dish.",
+    vocab: ['卵', '小麦', '乳製品', '肉', '魚', '食べられません', 'アレルギー', '蕎麦', '海老', '納豆'],
+  },
+];

@@ -129,6 +129,7 @@
     home: document.getElementById('view-home'),
     rules: document.getElementById('view-rules'),
     learn: document.getElementById('view-learn'),
+    practice: document.getElementById('view-practice'),
   };
 
   function showView(name) {
@@ -155,6 +156,18 @@
       card.append(info, learnBtn);
       groupListEl.append(card);
     });
+
+    const practiceCard = el('div', 'group-card');
+    const practiceInfo = el('div', 'group-card-info');
+    practiceInfo.append(
+      el('div', 'group-card-name', 'Practice with AI'),
+      el('div', 'group-card-count', 'role-play conversations'),
+      el('div', 'group-card-desc', 'Order, get a table, pay the bill. The AI plays the staff and corrects your Japanese. Uses your own free Gemini key.'),
+    );
+    const practiceBtn = el('button', 'btn btn-learn-inline', 'Open');
+    practiceBtn.addEventListener('click', () => window.KanjiApp.openPractice());
+    practiceCard.append(practiceInfo, practiceBtn);
+    groupListEl.append(practiceCard);
   }
 
   document.getElementById('btn-open-rules').addEventListener('click', () => showView('rules'));
@@ -425,6 +438,14 @@
     else if (e.key === 'ArrowLeft') prevBtn.click();
     else if (e.key === ' ') { e.preventDefault(); toggleFlip(); }
   });
+
+  window.KanjiApp = {
+    showView,
+    speak,
+    canSpeak,
+    wordMap,
+    openPractice: () => {},
+  };
 
   renderHome();
   showView('home');
