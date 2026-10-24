@@ -4,6 +4,8 @@
   const KEY_STORE = 'kc_gemini_key';
   const MODEL_STORE = 'kc_gemini_model';
   const LEVEL_STORE = 'kc_level';
+  const MODE_STORE = 'kc_reply_mode';
+  const ROMAJI_STORE = 'kc_romaji';
 
   const MODELS = [
     { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite (fast)' },
@@ -44,12 +46,19 @@
         },
         required: ['needed'],
       },
-      hint_ja: str,
-      hint_kana: str,
-      hint_en: str,
+      choices: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: { ja: str, kana: str, en: str, natural: { type: 'BOOLEAN' }, issue_en: str },
+          required: ['ja', 'kana', 'en', 'natural'],
+        },
+      },
+      tiles: { type: 'ARRAY', items: str },
+      decoy_tiles: { type: 'ARRAY', items: str },
       scene_finished: { type: 'BOOLEAN' },
     },
-    required: ['reply_ja', 'reply_kana', 'reply_en', 'correction', 'hint_ja', 'hint_kana', 'hint_en'],
+    required: ['reply_ja', 'reply_kana', 'reply_en', 'correction', 'choices', 'tiles', 'decoy_tiles'],
   };
 
   const SUMMARY_SCHEMA = {
@@ -179,11 +188,13 @@ RULES
 - Keep each of your lines to ${level.lines}. Ask only one thing at a time.
 - reply_ja: normal Japanese with kanji where natural. reply_kana: the complete reading in kana only (no kanji, no romaji). reply_en: a natural English translation.
 - Look at the learner's latest message. If it is natural Japanese for the situation, set correction.needed to false and leave the other correction fields as empty strings. If it has mistakes, is unnatural, or is written in English or romaji, set correction.needed to true, give better_ja (what they should have said), better_kana, and explanation_en (one or two short sentences). When the problem involves a kanji reading, an on/kun choice, a counter or a sound change, say so briefly. Do not be pedantic about small style points.
+- Messages written only in kana are fine; never correct a learner just for not using kanji.
 - Do not stop the scene to correct. Correct in the correction fields and carry on as staff in the same turn.
-- hint_ja / hint_kana / hint_en: one good thing the learner could say next, suited to their level.
+- choices: exactly 3 things the learner could say next in reply to your line, suited to their level. Exactly one has natural=true: a natural, correct reply. The other two each contain one typical learner mistake (wrong particle, wrong counter or reading, wrong politeness level, or an answer that does not fit the question), with natural=false and issue_en explaining that mistake in one short sentence. Leave issue_en empty for the natural one. ja uses kanji where natural; kana is its full reading; en is the English meaning.
+- tiles: the natural choice's ja split into 3 to 7 chunks in the correct order, with particles as their own chunks (for example 「生ビール」「を」「二杯」「お願いします」). Joining the tiles must give exactly the natural choice's ja without the final 。. decoy_tiles: 2 plausible wrong chunks, such as a wrong particle or a wrong counter.
 - scene_finished: true only when the learner's goal is complete and you have given a natural closing line.
 - If the learner asks in English how to say something, put the Japanese in the correction fields (needed true) and reply as staff waiting patiently.
-- Never break character except through the correction and hint fields.
+- Never break character except through the correction and choices fields.
 - When the learner says the practice is over, ignore the role-play fields and fill the summary schema instead.`;
   }
 
@@ -304,6 +315,8 @@ RULES
 
   // ---- chat screen ----
 
+  const MODES = { choose: 'Choose', build: 'Build', type: 'Type' };
+
   function startScenario(scenario) {
     const level = load(LEVEL_STORE, 'beginner');
     chat = {
@@ -312,7 +325,8 @@ RULES
       system: buildSystemPrompt(scenario, level),
       history: [],
       busy: false,
-      hint: null,
+      lastTurn: null,
+      draft: '',
       ended: false,
     };
     renderChat();
@@ -320,6 +334,25 @@ RULES
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  function shuffled(list) {
+    const arr = [...list];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function naturalChoice(turn) {
+    const choices = turn && Array.isArray(turn.choices) ? turn.choices : [];
+    return choices.find(c => c.natural) || null;
+  }
+
+  function currentMode() {
+    const mode = load(MODE_STORE, 'choose');
+    return MODES[mode] ? mode : 'choose';
+  }
 
   function renderChat() {
     titleEl.textContent = chat.scenario.title;
@@ -332,43 +365,220 @@ RULES
     chat.log = el('div', 'chat-log');
 
     const actions = el('div', 'chat-actions');
+    chat.modeSeg = el('div', 'pr-seg');
+    Object.entries(MODES).forEach(([key, label]) => {
+      const btn = el('button', 'btn btn-small pr-seg-btn', label);
+      btn.dataset.mode = key;
+      btn.addEventListener('click', () => {
+        save(MODE_STORE, key);
+        renderComposer();
+      });
+      chat.modeSeg.append(btn);
+    });
     chat.hintBtn = el('button', 'btn btn-small', 'Hint');
     chat.hintBtn.addEventListener('click', showHint);
-    chat.finishBtn = el('button', 'btn btn-small', 'Finish and review');
+    chat.finishBtn = el('button', 'btn btn-small', 'Finish');
     chat.finishBtn.addEventListener('click', finish);
-    actions.append(chat.hintBtn, chat.finishBtn);
+    actions.append(chat.modeSeg, el('span', 'chat-spacer'), chat.hintBtn, chat.finishBtn);
 
-    const form = el('div', 'chat-input');
-    chat.input = el('textarea', 'chat-textarea');
-    chat.input.rows = 1;
-    chat.input.placeholder = '日本語で話してみましょう';
-    chat.input.setAttribute('enterkeyhint', 'send');
-    chat.input.addEventListener('keydown', e => {
+    chat.composer = el('div', 'composer');
+
+    wrap.append(goal, chat.log, actions, chat.composer);
+    bodyEl.append(wrap);
+    renderComposer();
+  }
+
+  function setBusy(busy) {
+    chat.busy = busy;
+    [chat.hintBtn, chat.finishBtn].forEach(b => { b.disabled = busy || chat.ended; });
+    renderComposer();
+  }
+
+  // ---- composer: Choose / Build / Type ----
+
+  function renderComposer() {
+    const mode = currentMode();
+    chat.modeSeg.querySelectorAll('.pr-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    chat.composer.replaceChildren();
+    if (chat.ended) return;
+    if (mode === 'type') { renderType(); return; }
+    if (chat.busy || !chat.lastTurn) {
+      chat.composer.append(el('div', 'composer-empty', 'Waiting for the staff…'));
+      return;
+    }
+    if (mode === 'choose') renderChoose(); else renderBuild();
+  }
+
+  function renderChoose() {
+    const turn = chat.lastTurn;
+    const choices = Array.isArray(turn.choices) ? turn.choices : [];
+    if (!choices.length) {
+      chat.composer.append(el('div', 'composer-empty', 'No suggested replies for this line. Try Build or Type.'));
+      return;
+    }
+    if (!turn._order) turn._order = shuffled(choices.map((_, i) => i));
+    if (!turn._wrong) turn._wrong = new Set();
+
+    const list = el('div', 'choice-list');
+    const toggles = el('div', 'bubble-actions');
+    const kanaBtn = el('button', 'chip', 'Readings');
+    kanaBtn.addEventListener('click', () => list.classList.toggle('show-kana'));
+    const enBtn = el('button', 'chip', 'English');
+    enBtn.addEventListener('click', () => list.classList.toggle('show-en'));
+    toggles.append(kanaBtn, enBtn);
+
+    turn._order.forEach(i => {
+      const c = choices[i];
+      const btn = el('button', 'choice');
+      btn.append(el('div', 'choice-ja', c.ja), el('div', 'choice-kana', c.kana || ''), el('div', 'choice-en', c.en || ''));
+      if (turn._wrong.has(i)) {
+        btn.classList.add('wrong');
+        btn.append(el('div', 'choice-issue', c.issue_en || 'Not quite natural here.'));
+      }
+      btn.addEventListener('click', () => {
+        if (c.natural) {
+          sendTurn(c.ja, false);
+        } else {
+          turn._wrong.add(i);
+          renderComposer();
+        }
+      });
+      list.append(btn);
+    });
+
+    chat.composer.append(toggles, list);
+  }
+
+  function renderBuild() {
+    const turn = chat.lastTurn;
+    const tiles = Array.isArray(turn.tiles) ? turn.tiles.filter(Boolean) : [];
+    if (!tiles.length) {
+      chat.composer.append(el('div', 'composer-empty', 'No tiles for this line. Try Choose or Type.'));
+      return;
+    }
+    if (!turn._build) {
+      const decoys = Array.isArray(turn.decoy_tiles) ? turn.decoy_tiles.filter(Boolean) : [];
+      const pool = [
+        ...tiles.map((text, i) => ({ id: `t${i}`, text })),
+        ...decoys.map((text, i) => ({ id: `d${i}`, text })),
+      ];
+      turn._build = { pool: shuffled(pool), picked: [], status: '' };
+    }
+    const st = turn._build;
+    const expected = tiles.join('');
+    const assembled = st.picked.map(t => t.text).join('');
+
+    const answer = el('div', 'tile-answer');
+    if (!st.picked.length) answer.append(el('span', 'tile-placeholder', 'Tap tiles in order'));
+    st.picked.forEach(tile => {
+      const b = el('button', 'tile picked', tile.text);
+      b.addEventListener('click', () => {
+        st.picked = st.picked.filter(t => t !== tile);
+        st.status = '';
+        renderComposer();
+      });
+      answer.append(b);
+    });
+
+    const pool = el('div', 'tile-pool');
+    st.pool.filter(t => !st.picked.includes(t)).forEach(tile => {
+      const b = el('button', 'tile', tile.text);
+      b.addEventListener('click', () => {
+        st.picked.push(tile);
+        st.status = '';
+        renderComposer();
+      });
+      pool.append(b);
+    });
+
+    const controls = el('div', 'tile-controls');
+    const check = el('button', 'btn btn-primary btn-small', 'Check');
+    check.disabled = !st.picked.length;
+    check.addEventListener('click', () => {
+      if (assembled === expected) {
+        const nat = naturalChoice(turn);
+        sendTurn(nat ? nat.ja : `${expected}。`, false);
+      } else {
+        st.status = 'wrong';
+        renderComposer();
+      }
+    });
+    const clear = el('button', 'btn btn-small', 'Clear');
+    clear.addEventListener('click', () => { st.picked = []; st.status = ''; renderComposer(); });
+    controls.append(check, clear);
+
+    chat.composer.append(answer, pool, controls);
+
+    if (st.status === 'wrong') {
+      const msg = el('div', 'tile-msg');
+      msg.append(el('div', null, 'Not the expected order. Japanese word order can vary, so you can send it and let the staff judge.'));
+      const row = el('div', 'tile-controls');
+      const sendAnyway = el('button', 'btn btn-small', 'Send anyway');
+      sendAnyway.addEventListener('click', () => sendTurn(`${assembled}。`, false));
+      const show = el('button', 'btn btn-small', 'Show answer');
+      show.addEventListener('click', () => { st.status = 'answer'; renderComposer(); });
+      row.append(sendAnyway, show);
+      msg.append(row);
+      chat.composer.append(msg);
+    }
+
+    if (st.status === 'answer') {
+      const nat = naturalChoice(turn);
+      const msg = el('div', 'tile-msg');
+      msg.append(el('div', 'choice-ja', tiles.join(' · ')));
+      if (nat && nat.kana) msg.append(el('div', 'feedback-kana', nat.kana));
+      if (nat && nat.en) msg.append(el('div', 'feedback-why', nat.en));
+      chat.composer.append(msg);
+    }
+  }
+
+  function renderType() {
+    const romajiOn = load(ROMAJI_STORE, '1') === '1';
+
+    const input = el('textarea', 'chat-textarea');
+    input.rows = 1;
+    input.value = chat.draft;
+    input.disabled = chat.busy;
+    input.placeholder = romajiOn ? 'Type romaji: sumimasen' : '日本語で話してみましょう';
+    input.autocapitalize = 'off';
+    input.spellcheck = false;
+    input.setAttribute('enterkeyhint', 'send');
+
+    const preview = el('div', 'romaji-preview');
+    const updatePreview = () => {
+      preview.textContent = romajiOn && /[a-z]/i.test(chat.draft) ? `→ ${romajiToKana(chat.draft)}` : '';
+    };
+    input.addEventListener('input', () => { chat.draft = input.value; updatePreview(); });
+    input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
         e.preventDefault();
         submit();
       }
     });
-    form.append(chat.input);
+    updatePreview();
 
+    const toggle = el('label', 'romaji-toggle');
+    const box = el('input');
+    box.type = 'checkbox';
+    box.checked = romajiOn;
+    box.addEventListener('change', () => { save(ROMAJI_STORE, box.checked ? '1' : '0'); renderComposer(); });
+    toggle.append(box, ' Romaji → kana');
+
+    const row = el('div', 'chat-input');
+    row.append(input);
     if (SR) {
-      chat.micBtn = el('button', 'btn btn-mic', 'Mic');
-      chat.micBtn.addEventListener('click', listen);
-      form.append(chat.micBtn);
+      const mic = el('button', 'btn btn-mic', 'Mic');
+      mic.disabled = chat.busy;
+      mic.addEventListener('click', () => listen(mic));
+      row.append(mic);
     }
+    const send = el('button', 'btn btn-primary', 'Send');
+    send.disabled = chat.busy;
+    send.addEventListener('click', submit);
+    row.append(send);
 
-    chat.sendBtn = el('button', 'btn btn-primary', 'Send');
-    chat.sendBtn.addEventListener('click', submit);
-    form.append(chat.sendBtn);
-
-    wrap.append(goal, chat.log, actions, form);
-    bodyEl.append(wrap);
-  }
-
-  function setBusy(busy) {
-    chat.busy = busy;
-    [chat.sendBtn, chat.hintBtn, chat.finishBtn, chat.micBtn].forEach(b => { if (b) b.disabled = busy || chat.ended; });
-    chat.input.disabled = chat.ended;
+    chat.composer.append(toggle, row, preview);
+    if (romajiOn) chat.composer.append(el('div', 'romaji-help', 'Particles: ha → は, wo → を, he → へ. CAPITALS → katakana (BI-RU → ビール). n\' or nn → ん.'));
   }
 
   function scrollDown() {
@@ -466,14 +676,14 @@ RULES
       typing.remove();
       if (userBubble) addFeedback(userBubble, turn.correction);
       addStaff(turn);
-      chat.hint = turn;
-      if (turn.scene_finished) addNotice('Scene complete. Tap "Finish and review" for your summary, or keep chatting.');
+      chat.lastTurn = turn;
+      if (turn.scene_finished) addNotice('Scene complete. Tap "Finish" for your review, or keep chatting.');
     } catch (err) {
       typing.remove();
       chat.history.pop();
       if (userBubble) {
         userBubble.remove();
-        chat.input.value = text;
+        if (currentMode() === 'type') chat.draft = text;
       }
       const message = err instanceof ChatError ? err.message : 'Something went wrong. Try again.';
       addNotice(message, hidden ? () => sendTurn(text, true) : null);
@@ -484,41 +694,44 @@ RULES
 
   function submit() {
     if (!chat || chat.busy || chat.ended) return;
-    const text = chat.input.value.trim();
+    const romajiOn = load(ROMAJI_STORE, '1') === '1';
+    const text = (romajiOn ? romajiToKana(chat.draft) : chat.draft).trim();
     if (!text) return;
-    chat.input.value = '';
+    chat.draft = '';
     sendTurn(text, false);
   }
 
   function showHint() {
-    if (!chat.hint || !chat.hint.hint_ja) {
+    const hint = naturalChoice(chat.lastTurn);
+    if (!hint) {
       addNotice('No hint yet. Wait for the staff to speak first.');
       return;
     }
     const bubble = el('div', 'bubble hint');
-    bubble.append(el('div', 'bubble-text', `Try: ${chat.hint.hint_ja}`));
-    if (chat.hint.hint_kana) bubble.append(el('div', 'feedback-kana', chat.hint.hint_kana));
-    if (chat.hint.hint_en) bubble.append(el('div', 'feedback-why', chat.hint.hint_en));
-    const listen = listenButton(chat.hint.hint_kana);
-    if (listen) bubble.append(listen);
+    bubble.append(el('div', 'bubble-text', `Try: ${hint.ja}`));
+    if (hint.kana) bubble.append(el('div', 'feedback-kana', hint.kana));
+    if (hint.en) bubble.append(el('div', 'feedback-why', hint.en));
+    const speakBtn = listenButton(hint.kana);
+    if (speakBtn) bubble.append(speakBtn);
     chat.log.append(bubble);
     scrollDown();
   }
 
-  function listen() {
+  function listen(micBtn) {
     if (!SR) return;
     const rec = new SR();
     rec.lang = 'ja-JP';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    chat.micBtn.classList.add('active');
+    micBtn.classList.add('active');
     rec.onresult = e => {
       const heard = e.results[0][0].transcript;
-      chat.input.value = (chat.input.value ? chat.input.value + ' ' : '') + heard;
+      chat.draft = (chat.draft ? chat.draft + ' ' : '') + heard;
+      renderComposer();
     };
     rec.onerror = () => addNotice('The microphone did not work. Check the browser has permission to use it.');
-    rec.onend = () => chat.micBtn.classList.remove('active');
-    try { rec.start(); } catch (e) { chat.micBtn.classList.remove('active'); }
+    rec.onend = () => micBtn.classList.remove('active');
+    try { rec.start(); } catch (e) { micBtn.classList.remove('active'); }
   }
 
   async function finish() {

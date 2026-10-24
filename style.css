@@ -496,3 +496,64 @@ body {
 .chat-textarea { resize: none; max-height: 120px; flex: 1; }
 .btn-mic.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Reply modes */
+.chat-actions { align-items: center; flex-wrap: wrap; }
+.chat-spacer { flex: 1; }
+.composer { display: flex; flex-direction: column; gap: 8px; }
+.composer-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px; }
+
+.choice-list { display: flex; flex-direction: column; gap: 6px; }
+.choice {
+  text-align: left;
+  font-family: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.choice:hover { border-color: var(--accent); }
+.choice-ja { font-size: 1.05rem; }
+.choice-kana, .choice-en { display: none; color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
+.choice-list.show-kana .choice-kana { display: block; }
+.choice-list.show-en .choice-en { display: block; }
+.choice.wrong { border-color: #b23b3b; opacity: 0.85; }
+.choice-issue { color: #b23b3b; font-size: 0.8rem; margin-top: 4px; }
+
+.tile-answer, .tile-pool { display: flex; flex-wrap: wrap; gap: 6px; }
+.tile-answer {
+  min-height: 46px;
+  padding: 6px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  align-items: center;
+}
+.tile-placeholder { color: var(--text-muted); font-size: 0.85rem; padding: 0 6px; }
+.tile {
+  font-family: inherit;
+  font-size: 1.05rem;
+  padding: 7px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.tile.picked { background: var(--tag-bg); border-color: var(--accent); }
+.tile-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.tile-msg {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--tag-bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.romaji-toggle { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.romaji-preview { font-size: 1.05rem; min-height: 1.3em; color: var(--accent); }
+.romaji-help { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
